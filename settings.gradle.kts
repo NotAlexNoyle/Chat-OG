@@ -11,7 +11,7 @@ if (!skipBuildPythonCheck) {
         gradle.startParameter.taskNames[0].equals("buildPython", ignoreCase = true)
     )
     val customMavenLocal = System.getProperty("SELF_MAVEN_LOCAL_REPO")
-    if (!customMavenLocal.isNullOrEmpty() && isBuildPythonOnly) {
+    if (!customMavenLocal.isNullOrEmpty() || isBuildPythonOnly) {
         println("TrueOG Bootstrap detected. Running './gradlew buildPython' as a pre-build step...")
 
         try {
