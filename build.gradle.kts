@@ -1,5 +1,10 @@
 import de.undercouch.gradle.tasks.download.Download
+import org.gradle.api.JavaVersion
+import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import java.io.BufferedOutputStream
+import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
 import java.util.zip.ZipEntry
@@ -100,7 +105,9 @@ val unzipPython by tasks.creating(Copy::class) {
 
 val configurePython by tasks.creating(Exec::class) {
     dependsOn(unzipPython)
-    Files.createDirectories(file("$rootDir/build/python/build").toPath())
+    doFirst {
+        Files.createDirectories(file("$rootDir/build/python/build").toPath())
+    }
     workingDir("./build/python")
     commandLine("./configure")
     args(
@@ -161,9 +168,20 @@ tasks.shadowJar.configure {
     }
 }
 
-tasks.register("buildPython") {
+tasks.register<Exec>("buildPython") {
     group = "Chat-OG"
-    dependsOn("installPython")
+    val isPreBuildRun = System.getenv("PRE_BUILD_PYTHON_RUN")?.toBoolean() ?: false
+    onlyIf {
+        val isSoleTask = gradle.startParameter.taskNames.contains("buildPython") &&
+                         gradle.startParameter.taskNames.size == 1
+        val shouldRun = isSoleTask || isPreBuildRun
+        shouldRun
+    }
+    if (gradle.startParameter.taskNames.contains("buildPython") &&
+        gradle.startParameter.taskNames.size == 1 ||
+        isPreBuildRun) {
+        dependsOn("installPython")
+    }
 }
 
 tasks.build {
@@ -176,8 +194,8 @@ tasks.jar.configure {
 
 tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.add("-parameters")
-    options.encoding = "UTF-8" 
-	options.forkOptions.executable = File(options.forkOptions.javaHome, "bin/javac").path
+    options.encoding = "UTF-8"
+    options.forkOptions.executable = File(options.forkOptions.javaHome, "bin/javac").path
 }
 
 kotlin {
