@@ -1,7 +1,7 @@
 # Chat-OG
 Chat plugin for [TrueOG](https://github.com/true-og/true-og)
 > [!WARNING]  
-> If you have a Chat-OG binary with argostranslate, libffi is needed for the argostranslate Python package to function
+> If you have a Chat-OG binary with argostranslate, libffi, openssl, lzma, and zlib are needed for the argostranslate Python package to function
 
 ## Features
 - Adds prefix, union and suffix to chat messages
@@ -11,8 +11,7 @@ Chat plugin for [TrueOG](https://github.com/true-og/true-og)
 - Staff and donor chat
 
 ## Building
-If you want the translator ([argos-translate](https://github.com/argosopentech/argos-translate)) run `./gradlew buildPython` before building (make sure you have the development packages of zlib, openssl, lzma and libffi)\
-Building: `./gradlew build`
+If you want the translator ([argos-translate](https://github.com/argosopentech/argos-translate)) run `./gradlew buildPython` before building with `./gradlew build`. Otherwise, run `./gradlew build` alone.
 
 ## Emoji Converter Credits
 - https://github.com/mathiasbynens/emoji-test-regex-pattern
