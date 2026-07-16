@@ -17,6 +17,26 @@ internal abstract class ChatSystem {
     abstract val audience: Audience
     abstract val name: String
 
+    companion object {
+        private val chatItemResolver: java.lang.reflect.Method? by lazy {
+            try {
+                Class.forName("me.dadus33.chatitem.chatmanager.ChatManager")
+                    .getMethod("replaceItemsWithNames", String::class.java)
+            } catch (_: Throwable) {
+                null
+            }
+        }
+
+        fun resolveChatItems(text: String): String {
+            val method = chatItemResolver ?: return text
+            return try {
+                method.invoke(null, text) as? String ?: text
+            } catch (_: Throwable) {
+                text
+            }
+        }
+    }
+
     abstract fun sendDiscordMessage(text: String, playerPartString: String, uuid: UUID)
 
     fun sendMessage(text: String, player: Player) {
@@ -26,7 +46,7 @@ internal abstract class ChatSystem {
         val discordPlayerPartString =
             listOfNotNull(prefix, ChatUtil.getPlayerPartString(player, includeSuffix = true)).joinToString(" | ")
 
-        sendDiscordMessage(text, discordPlayerPartString, player.uniqueId)
+        sendDiscordMessage(resolveChatItems(text), discordPlayerPartString, player.uniqueId)
 
         val messageComponent =
             ChatUtil.processText(text, player)?.color(PlayerUtils.getMessageColor(player.uniqueId)) ?: return
