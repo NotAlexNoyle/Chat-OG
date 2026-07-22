@@ -30,7 +30,7 @@ internal object ChatUtil {
             "${PlayerUtils.getPrefix(player.uniqueId)}${player.name}${if (includeSuffix) PlayerUtils.getSuffix(player.uniqueId) else ""}"
 
         val unionTag =
-            MiniMessage.miniMessage().serialize(UtilitiesOG.trueogExpand("<simpleclans_clan_color_tag>", player))
+            MiniMessage.miniMessage().serialize(UtilitiesOG.trueogExpand("<simpleunions_union_color_tag>", player))
         val unionPlainTag = UtilitiesOG.stripFormatting(unionTag)
         if (unionPlainTag.isNotEmpty() && unionPlainTag != "None") {
             playerPart = legacyToMm("&8[$unionTag&8] ") + playerPart
