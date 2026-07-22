@@ -11,7 +11,6 @@ import net.kyori.adventure.text.TextComponent
 import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
-import net.kyori.adventure.text.minimessage.MiniMessage
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import net.trueog.utilitiesog.UtilitiesOG
 import nl.skbotnl.chatog.ChatOG.Companion.config
@@ -21,7 +20,6 @@ import nl.skbotnl.chatog.ChatOG.Companion.scope
 import nl.skbotnl.chatog.util.ChatUtil
 import nl.skbotnl.chatog.util.ChatUtil.legacyToMm
 import nl.skbotnl.chatog.util.PlayerExtensions.chatSystem
-import nl.skbotnl.chatog.util.PlayerUtils
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -43,7 +41,7 @@ internal class Events : Listener {
             return
         }
 
-        val playerPartString = ChatUtil.getPlayerPartString(event.player, includeSuffix = true)
+        val playerPartString = ChatUtil.getPlayerPartString(event.player)
 
         scope.launch {
             discordBridgeLock.read {
@@ -67,7 +65,7 @@ internal class Events : Listener {
             return
         }
 
-        val playerPartString = ChatUtil.getPlayerPartString(event.player, includeSuffix = true)
+        val playerPartString = ChatUtil.getPlayerPartString(event.player)
 
         scope.launch {
             discordBridgeLock.read {
@@ -91,7 +89,7 @@ internal class Events : Listener {
             return
         }
 
-        val playerPartString = ChatUtil.getPlayerPartString(event.player, includeSuffix = true)
+        val playerPartString = ChatUtil.getPlayerPartString(event.player)
 
         val reason = PlainTextComponentSerializer.plainText().serialize(event.reason())
 
@@ -117,7 +115,7 @@ internal class Events : Listener {
             return
         }
 
-        val playerPartString = ChatUtil.getPlayerPartString(event.player, includeSuffix = true)
+        val playerPartString = ChatUtil.getPlayerPartString(event.player)
 
         val advancementTitleKey = event.advancement.display?.title() ?: return
         val advancementTitle = PlainTextComponentSerializer.plainText().serialize(advancementTitleKey)
@@ -144,11 +142,13 @@ internal class Events : Listener {
         if (!config.discord.enabled) {
             return
         }
-        if (event.message() !is TextComponent) {
+
+        val message = event.message()
+        if (message !is TextComponent) {
             return
         }
 
-        val content = (event.message() as TextComponent).content()
+        val content = message.content()
         if (content == "") {
             return
         }
@@ -176,43 +176,33 @@ internal class Events : Listener {
             return
         }
 
-        if (event.deathMessage() is TextComponent) {
+        val deathMessage = event.deathMessage()
+        if (deathMessage is TextComponent) {
             scope.launch {
                 discordBridgeLock.read {
-                    discordBridge?.sendEmbed(
-                        (event.deathMessage() as TextComponent).content(),
-                        event.player.uniqueId,
-                        0xFF0000,
-                    )
+                    discordBridge?.sendEmbed(deathMessage.content(), event.player.uniqueId, 0xFF0000)
                 }
             }
             return
         }
 
-        var nameString = "${PlayerUtils.getPrefix(event.player.uniqueId)}${event.player.name}"
+        val translatableDeathMessage = deathMessage as TranslatableComponent
+        val builder = translatableDeathMessage.toBuilder()
+        builder.color(TextColor.color(16755200))
+        builder.append(Component.text("."))
+        val nameComponent = UtilitiesOG.trueogColorize(legacyToMm(ChatUtil.getPlayerPartString(event.player)))
+        builder.args(translatableDeathMessage.args().toMutableList().apply { this[0] = nameComponent })
+        val newDeathMessage = builder.build()
 
-        val unionTag =
-            MiniMessage.miniMessage().serialize(UtilitiesOG.trueogExpand("<simpleclans_clan_color_tag>", event.player))
-        val unionPlainTag = UtilitiesOG.stripFormatting(unionTag)
-        if (unionPlainTag.isNotEmpty() && unionPlainTag != "None") {
-            nameString = "&8[$unionTag&8] $nameString"
-        }
-        val nameComponent = UtilitiesOG.trueogColorize(legacyToMm(nameString))
-
-        var oldDeathMessage = event.deathMessage() as TranslatableComponent
-        oldDeathMessage = oldDeathMessage.color(TextColor.color(16755200))
-        oldDeathMessage = oldDeathMessage.append(Component.text("."))
-
-        val argList = oldDeathMessage.args().toMutableList()
-        argList[0] = nameComponent
-        val deathMessage = oldDeathMessage.args(argList)
-
-        event.deathMessage(deathMessage)
-
-        val translatedDeathMessage = PlainTextComponentSerializer.plainText().serialize(deathMessage)
-
+        event.deathMessage(newDeathMessage)
         scope.launch {
-            discordBridgeLock.read { discordBridge?.sendEmbed(translatedDeathMessage, event.player.uniqueId, 0xFF0000) }
+            discordBridgeLock.read {
+                discordBridge?.sendEmbed(
+                    PlainTextComponentSerializer.plainText().serialize(newDeathMessage),
+                    event.player.uniqueId,
+                    0xFF0000,
+                )
+            }
         }
     }
 
