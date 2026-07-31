@@ -54,8 +54,8 @@ dependencies {
     compileOnly(
         files("libs/AnnouncerPlus-1.4.1.jar")
     ) // Import AnnouncerPlus API (binary-compatible with AnnouncerPlus-OG API).
-    compileOnlyApi(project(":libs:Utilities-OG")) // Import TrueOG Network Utilities-OG Java API (from source).
-    compileOnlyApi(project(":libs:Vanish-OG")) // Import TrueOG Network Vanish-OG Java API (from source).
+    compileOnlyApi("net.trueog.utilities-og:Utilities-OG") // Import TrueOG Network Utilities-OG Java API (from source).
+    compileOnlyApi("de.myzelyam.vanishog:Vanish-OG") // Import TrueOG Network Vanish-OG Java API (from source).
     compileOnly("net.luckperms:api:5.5") // Import LuckPerms API.
     compileOnly(
         "io.github.miniplaceholders:miniplaceholders-api:2.2.3"
