@@ -7,10 +7,10 @@ plugins {
     id("com.diffplug.spotless") version "8.1.0" // Import Spotless plugin.
     id("com.gradleup.shadow") version "8.3.9" // Import Shadow plugin.
     eclipse // Import Eclipse plugin.
-    kotlin("jvm") version "2.4.10" // Import Kotlin JVM plugin.
+    kotlin("jvm") version "2.1.21" // Import Kotlin JVM plugin.
 }
 
-/* ---------------------------- Java / Kotlin -------------------------- */
+/* --------------------------- JDK / Kotlin ---------------------------- */
 java {
     sourceCompatibility = JavaVersion.VERSION_17 // Compile with JDK 17 compatibility.
     toolchain { // Select Java toolchain.
