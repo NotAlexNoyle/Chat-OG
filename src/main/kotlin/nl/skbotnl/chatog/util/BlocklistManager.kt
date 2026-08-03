@@ -1,7 +1,8 @@
 package nl.skbotnl.chatog.util
 
+import java.io.IOException
 import java.net.URI
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.days
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import nl.skbotnl.chatog.ChatOG.Companion.config
@@ -10,16 +11,16 @@ import nl.skbotnl.chatog.ChatOG.Companion.scope
 
 internal class BlocklistManager {
     private val lock = Any()
-    private val blockList = mutableListOf<String>()
+    private val blockedDomainTrie = DomainTrie()
 
     init {
         plugin.logger.info("Loading the blocklists...")
         refresh()
-        plugin.logger.info("Loaded the blocklists!")
 
         scope.launch {
             while (true) {
-                delay(TimeUnit.DAYS.toMillis(1))
+                delay(1.days)
+                plugin.logger.info("Refreshing the blocklists...")
                 refresh()
             }
         }
@@ -27,15 +28,21 @@ internal class BlocklistManager {
 
     private fun refresh() {
         synchronized(lock) {
-            blockList.clear()
+            blockedDomainTrie.clear()
             config.blocklist.blocklists.forEach { blocklist ->
-                URI(blocklist).toURL().openStream().use { input ->
-                    input.bufferedReader().use { bufferedReader ->
-                        bufferedReader.lines().forEach { if (!it.startsWith("#")) blockList.add(it) }
+                try {
+                    URI(blocklist).toURL().openStream().use { input ->
+                        input.bufferedReader().use { bufferedReader ->
+                            bufferedReader.lines().forEach { if (!it.startsWith("#")) blockedDomainTrie.insert(it) }
+                        }
                     }
+                } catch (_: IOException) {
+                    plugin.logger.severe("Failed to load the blocklists")
+                    return
                 }
             }
         }
+        plugin.logger.info("Loaded the blocklists!")
     }
 
     private val urlRegex = Regex("(?:https?://)?([a-zA-Z0-9.-]+\\.[a-zA-Z]{2,})")
@@ -43,6 +50,6 @@ internal class BlocklistManager {
     fun checkUrl(url: String): Boolean {
         val match = urlRegex.find(url) ?: return false
         val baseUrl = match.groups[1]?.value ?: return false
-        return synchronized(lock) { blockList.contains(baseUrl) }
+        return synchronized(lock) { blockedDomainTrie.contains(baseUrl) }
     }
 }

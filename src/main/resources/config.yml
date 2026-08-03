@@ -4,10 +4,10 @@ prefix: <dark_gray>[<green>Chat<white>-<dark_red>OG<dark_gray>]
 
 blocklist:
   enabled: true
-  # Only blocklists with just a list of domains
+  # Only wildcard domain blocklists are supported
   blocklists:
-    - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/domains/multi.txt
-    - https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/nsfw-onlydomains.txt
+    - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/multi-onlydomains.txt
+    - https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/wildcard/nsfw-onlydomains.txt
 
 # ---Redis---
 redis:

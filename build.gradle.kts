@@ -7,7 +7,7 @@ plugins {
     id("com.diffplug.spotless") version "8.1.0" // Import Spotless plugin.
     id("com.gradleup.shadow") version "8.3.9" // Import Shadow plugin.
     eclipse // Import Eclipse plugin.
-    kotlin("jvm") version "2.1.21" // Import Kotlin JVM plugin.
+    kotlin("jvm") version "2.4.10" // Import Kotlin JVM plugin.
 }
 
 /* ---------------------------- Java / Kotlin -------------------------- */
@@ -54,8 +54,8 @@ dependencies {
     compileOnly(
         files("libs/AnnouncerPlus-1.4.1.jar")
     ) // Import AnnouncerPlus API (binary-compatible with AnnouncerPlus-OG API).
-    compileOnlyApi(project(":libs:Utilities-OG")) // Import TrueOG Network Utilities-OG Java API (from source).
-    compileOnlyApi(project(":libs:Vanish-OG")) // Import TrueOG Network Vanish-OG Java API (from source).
+    compileOnlyApi("net.trueog.utilities-og:Utilities-OG") // Import TrueOG Network Utilities-OG Java API (from source).
+    compileOnlyApi("de.myzelyam.vanishog:Vanish-OG") // Import TrueOG Network Vanish-OG Java API (from source).
     compileOnly("net.luckperms:api:5.5") // Import LuckPerms API.
     compileOnly(
         "io.github.miniplaceholders:miniplaceholders-api:2.2.3"
