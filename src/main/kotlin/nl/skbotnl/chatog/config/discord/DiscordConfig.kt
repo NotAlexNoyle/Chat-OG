@@ -18,6 +18,13 @@ constructor(
     @param:JsonProperty("staff") val staff: DiscordRoleChatConfig,
     @param:JsonProperty("premium") val premium: DiscordRoleChatConfig,
     @param:JsonProperty("developer") val developer: DiscordRoleChatConfig,
+    // Multi world game channels keyed by lobby prefix, e.g. "HB" for the worlds HB1-hub and HB1-<map>.
+    @param:JsonProperty("games")
+    @field:JsonSetter(nulls = Nulls.AS_EMPTY)
+    val games: Map<String, DiscordRoleChatConfig>,
+    // Null falls back to the defaults in WorldChatSystem so older configs keep loading.
+    @param:JsonProperty("gameLobbyLabel") val gameLobbyLabel: String?,
+    @param:JsonProperty("gameWorldLabel") val gameWorldLabel: String?,
     @param:JsonProperty("listCommandName") val listCommandName: String,
     @param:JsonProperty("listCommandText") val listCommandText: String,
     @param:JsonProperty("useColorCodeRoles") val useColorCodeRoles: Boolean,

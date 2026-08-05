@@ -39,24 +39,35 @@ internal abstract class ChatSystem {
 
     abstract fun sendDiscordMessage(text: String, playerPartString: String, uuid: UUID)
 
+    // Lets a subclass render its own chat line. Null keeps the default format, empty drops the message.
+    protected open fun formatLine(player: Player, message: Component): Component? = null
+
     fun sendMessage(text: String, player: Player) {
+        val messageComponent =
+            ChatUtil.processText(text, player)?.color(PlayerUtils.getMessageColor(player.uniqueId)) ?: return
+
+        // Runs before the relay so a dropped message never reaches Discord either.
+        val formattedLine = formatLine(player, messageComponent)
+        if (formattedLine == Component.empty()) return
+
         var playerPartString = ChatUtil.getPlayerPartString(player)
         playerPartString = listOfNotNull(prefix, playerPartString).joinToString(" | ")
 
         val discordPlayerPartString =
             listOfNotNull(prefix, ChatUtil.getPlayerPartString(player, includeSuffix = true)).joinToString(" | ")
 
+        // Relayed only after the blocklist check so a suppressed message never reaches Discord.
         sendDiscordMessage(resolveChatItems(text), discordPlayerPartString, player.uniqueId)
 
-        val messageComponent =
-            ChatUtil.processText(text, player)?.color(PlayerUtils.getMessageColor(player.uniqueId)) ?: return
-
-        val chatComponent =
-            UtilitiesOG.trueogColorize(
-                ChatUtil.legacyToMm("$playerPartString<reset>${PlayerUtils.getSuffix(player.uniqueId)} &7> ")
-            )
-
-        var textComponent = Component.join(JoinConfiguration.noSeparators(), chatComponent, messageComponent)
+        var textComponent =
+            formattedLine
+                ?: Component.join(
+                    JoinConfiguration.noSeparators(),
+                    UtilitiesOG.trueogColorize(
+                        ChatUtil.legacyToMm("$playerPartString<reset>${PlayerUtils.getSuffix(player.uniqueId)} &7> ")
+                    ),
+                    messageComponent,
+                )
         textComponent =
             textComponent.hoverEvent(
                 HoverEvent.hoverEvent(

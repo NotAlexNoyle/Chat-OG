@@ -13,8 +13,11 @@ import org.bukkit.Bukkit
 
 internal object GeneralChatSystem : ChatSystem() {
     override val prefix = null
+
+    // Multi world game worlds have their own chat, so global chat must not reach into them either.
     override val audience: Audience
-        get() = Audience.audience(Bukkit.getOnlinePlayers())
+        get() =
+            Audience.audience(Bukkit.getOnlinePlayers().filter { WorldChatSystem.keyForWorld(it.world.name) == null })
 
     override val name = "general"
 

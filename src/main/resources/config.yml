@@ -58,6 +58,25 @@ discord:
     channelId: ^{DISCORD_DEVELOPER_ID}
     webhook: ^{DISCORD_DEVELOPER_WEBHOOK}
 
+  # Multi world game channels, keyed by the lobby prefix used by the game's own config.
+  # Worlds are named <prefix><number>-hub for a lobby and <prefix><number>-<map> for a game,
+  # so HB1-hub and HB1-Ancient_Plateau both link to the HB channel.
+  # Chat, joins, quits, kicks, deaths and advancements in those worlds go there instead of general.
+  # Every entry needs all three keys, and an unresolved webhook stops the plugin from loading.
+  games:
+    HB:
+      enabled: true
+      channelId: ^{DISCORD_HB_ID}
+      webhook: ^{DISCORD_HB_WEBHOOK}
+    SP:
+      enabled: true
+      channelId: ^{DISCORD_SP_ID}
+      webhook: ^{DISCORD_SP_WEBHOOK}
+
+  # Discord label for multi world game worlds. %id% is the lobby id, for example HB1.
+  gameLobbyLabel: "[%id% - Lobby]"
+  gameWorldLabel: "[%id% - In Game]"
+
   # List players command
   listCommandName: list
   # Available placeholders: %onlineplayers%, %maxplayers%

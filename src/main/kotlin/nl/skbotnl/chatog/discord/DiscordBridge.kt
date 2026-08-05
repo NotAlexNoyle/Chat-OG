@@ -30,6 +30,7 @@ import net.kyori.adventure.text.format.TextColor
 import net.trueog.utilitiesog.UtilitiesOG
 import nl.skbotnl.chatog.ChatOG.Companion.config
 import nl.skbotnl.chatog.ChatOG.Companion.plugin
+import nl.skbotnl.chatog.chatsystem.WorldChatSystem
 import nl.skbotnl.chatog.translation.command.TranslateMessage
 import nl.skbotnl.chatog.util.ChatUtil
 import nl.skbotnl.chatog.util.EmojiConverter
@@ -42,8 +43,13 @@ internal class DiscordBridge private constructor() {
     private var staffWebhook: WebhookClient? = null
     private var premiumWebhook: WebhookClient? = null
     private var developerWebhook: WebhookClient? = null
+    private val gameWebhooks = mutableMapOf<String, WebhookClient>()
 
     companion object {
+        // The discord.games key whose channel this is, or null when it is not a game channel.
+        private fun gameKeyOf(channelId: String): String? =
+            config.discord.games.entries.firstOrNull { it.value.enabled && it.value.channelId == channelId }?.key
+
         fun create(): DiscordBridge? {
             val discordBridge = DiscordBridge()
             if (config.discord.general.webhook != null) {
@@ -84,6 +90,37 @@ internal class DiscordBridge private constructor() {
             } else if (config.discord.developer.enabled) {
                 plugin.logger.warning("You have enabled developer Discord but have not set up the developer webhook")
             }
+            for ((key, game) in config.discord.games) {
+                if (!game.enabled) continue
+                if (game.channelId == null) {
+                    plugin.logger.warning(
+                        "You have enabled game Discord \"$key\" but have not set up its channelId, so Discord to Minecraft will not work for it"
+                    )
+                }
+                if (game.webhook == null) {
+                    plugin.logger.warning("You have enabled game Discord \"$key\" but have not set up its webhook")
+                    continue
+                }
+                try {
+                    discordBridge.gameWebhooks[key] = WebhookClient.withUrl(game.webhook.toString())
+                } catch (_: IllegalArgumentException) {
+                    plugin.logger.warning("Config option \"games.$key.webhook\" is invalid")
+                }
+            }
+            // Two channels sharing an id would silently steal each other's messages, so say so loudly.
+            val channelIds =
+                listOfNotNull(
+                    config.discord.general.channelId,
+                    config.discord.staff.channelId.takeIf { config.discord.staff.enabled },
+                    config.discord.premium.channelId.takeIf { config.discord.premium.enabled },
+                    config.discord.developer.channelId.takeIf { config.discord.developer.enabled },
+                ) + config.discord.games.values.filter { it.enabled }.mapNotNull { it.channelId }
+            channelIds
+                .groupingBy { it }
+                .eachCount()
+                .filterValues { it > 1 }
+                .keys
+                .forEach { plugin.logger.severe("Discord channel id \"$it\" is configured for more than one channel") }
 
             if (config.discord.botToken == null) {
                 plugin.logger.severe("You have enabled Discord but have not set up the bot token")
@@ -146,7 +183,8 @@ internal class DiscordBridge private constructor() {
                         (if (config.discord.premium.enabled) it.channel.id != config.discord.premium.channelId
                         else true) &&
                         (if (config.discord.developer.enabled) it.channel.id != config.discord.developer.channelId
-                        else true)
+                        else true) &&
+                        gameKeyOf(it.channel.id) == null
                 ) {
                     return@listener
                 }
@@ -293,7 +331,8 @@ internal class DiscordBridge private constructor() {
                             )
                         }
 
-                        config.discord.general.channelId -> {
+                        // General and the game channels are both unlabelled.
+                        else -> {
                             Component.join(
                                 JoinConfiguration.noSeparators(),
                                 discordComponent,
@@ -301,10 +340,6 @@ internal class DiscordBridge private constructor() {
                                 userComponent,
                                 contentComponent,
                             )
-                        }
-
-                        else -> {
-                            throw RuntimeException("Invalid channel id")
                         }
                     }
 
@@ -347,14 +382,20 @@ internal class DiscordBridge private constructor() {
                         }
                     }
 
+                    // Skips the game worlds, which have their own channel and their own chat.
                     config.discord.general.channelId -> {
                         for (p in Bukkit.getOnlinePlayers()) {
+                            if (WorldChatSystem.keyForWorld(p.world.name) != null) continue
                             p.sendMessage(messageComponent)
                         }
                     }
 
+                    // A game channel reaches only the players inside that game's worlds.
                     else -> {
-                        throw RuntimeException("Invalid channel id")
+                        val gameKey = gameKeyOf(it.channel.id) ?: return@listener
+                        for (p in WorldChatSystem.playersForKey(gameKey)) {
+                            p.sendMessage(messageComponent)
+                        }
                     }
                 }
 
@@ -473,7 +514,26 @@ internal class DiscordBridge private constructor() {
         developerWebhook!!.send(webhookMessage.build())
     }
 
-    fun sendEmbed(message: String, uuid: UUID?, color: Int?) {
+    suspend fun sendGameMessage(key: String, message: String, name: String, uuid: UUID?) {
+        // create() already warned about this once at startup, so stay quiet rather than log per message.
+        val gameWebhook = gameWebhooks[key] ?: return
+
+        val webhookMessage =
+            WebhookMessageBuilder().apply {
+                setUsername(UtilitiesOG.stripFormatting(name))
+                setContent(
+                    UtilitiesOG.stripFormatting(ChatUtil.stripGroupMentions((ChatUtil.convertMentions(message))))
+                )
+                if (uuid != null) setAvatarUrl("https://minotar.net/helm/$uuid.png")
+            }
+
+        gameWebhook.send(webhookMessage.build())
+    }
+
+    // A null key sends to the general channel.
+    fun sendEmbed(message: String, uuid: UUID?, color: Int?, key: String? = null) {
+        val target = if (key == null) webhook else gameWebhooks[key] ?: return
+
         var iconUrl: String? = null
         if (uuid != null) {
             iconUrl = "https://minotar.net/helm/$uuid.png"
@@ -486,6 +546,6 @@ internal class DiscordBridge private constructor() {
                         .setAuthor(WebhookEmbed.EmbedAuthor(UtilitiesOG.stripFormatting(message), iconUrl, null))
             }
 
-        webhook.send(webhookMessage.build())
+        target.send(webhookMessage.build())
     }
 }

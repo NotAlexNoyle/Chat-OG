@@ -52,6 +52,11 @@ internal class ChatOG : JavaPlugin() {
         val discordBridgeLock = ReentrantReadWriteLock()
         var lastMessagedMap: MutableMap<UUID, UUID> = HashMap()
 
+        // Only true once onEnable has fully succeeded, so the API never runs against a half started plugin.
+        @Volatile private var ready = false
+
+        fun isReady() = ready
+
         fun isConfigInitialized() = ::config.isInitialized
 
         fun isLanguageDatabaseInitialized() = ::languageDatabase.isInitialized
@@ -130,9 +135,13 @@ internal class ChatOG : JavaPlugin() {
 
         val chatAPI = ChatAPI()
         this.server.servicesManager.register(ChatAPI::class.java, chatAPI, this, ServicePriority.Normal)
+
+        ready = true
     }
 
     override fun onDisable() {
+        ready = false
+
         if (isConfigInitialized()) {
             if (discordBridge != null) {
                 discordBridgeLock.read {
