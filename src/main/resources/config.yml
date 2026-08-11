@@ -72,6 +72,10 @@ discord:
       enabled: true
       channelId: ^{DISCORD_SP_ID}
       webhook: ^{DISCORD_SP_WEBHOOK}
+    BB:
+      enabled: true
+      channelId: ^{DISCORD_BB_ID}
+      webhook: ^{DISCORD_BB_WEBHOOK}
 
   # Discord label for multi world game worlds. %id% is the lobby id, for example HB1.
   gameLobbyLabel: "[%id% - Lobby]"

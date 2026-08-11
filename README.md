@@ -38,7 +38,9 @@ discord:
 - Joins, quits, kicks, deaths and advancements follow the same routing. The main world and its nether
   and end keep using the general channel; any other world is not reported.
 - Staff, premium and developer chat, private messages and `/broadcast` stay global in every world.
-- `games` ships empty, so nothing changes until it is filled in.
+- `games` ships with `HB` (TheHerobrine-OG), `SP` (Splegg-OG) and `BB` (BuildBattle-OG). Remove a key to drop
+  its worlds back into global chat; a key present isolates those worlds even while `enabled` is false, which
+  only gates the Discord side.
 
 ## API
 
