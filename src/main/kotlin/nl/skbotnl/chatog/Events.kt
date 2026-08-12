@@ -50,8 +50,19 @@ internal class Events : Listener {
     private fun onlineCount(key: String?) =
         if (key == null) Bukkit.getOnlinePlayers().count() else WorldChatSystem.playersForKey(key).size
 
-    // Count players in a specific world.
-    private fun onlineCountInWorld(worldName: String): Int = Bukkit.getWorld(worldName)?.players?.size ?: 0
+    // Count players in a specific world. For the standard main world trio ("world", "world_nether", "world_the_end"),
+    // return the server-wide online player count so Discord shows merged counts across all worlds.
+    private fun onlineCountInWorld(worldName: String): Int {
+        return if (
+            worldName.equals("world", ignoreCase = true) ||
+                worldName.equals("world_nether", ignoreCase = true) ||
+                worldName.equals("world_the_end", ignoreCase = true)
+        ) {
+            Bukkit.getOnlinePlayers().count()
+        } else {
+            Bukkit.getWorld(worldName)?.players?.size ?: 0
+        }
+    }
 
     // Gets the lobby/game label for a world, e.g. "HB1 Lobby" or "HB1 Game".
     private fun getGameLabel(worldName: String): String? {
