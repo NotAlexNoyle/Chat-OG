@@ -50,6 +50,16 @@ internal class Events : Listener {
     private fun onlineCount(key: String?) =
         if (key == null) Bukkit.getOnlinePlayers().count() else WorldChatSystem.playersForKey(key).size
 
+    // Count players in a specific world.
+    private fun onlineCountInWorld(worldName: String): Int = Bukkit.getWorld(worldName)?.players?.size ?: 0
+
+    // Gets the lobby/game label for a world, e.g. "HB1 Lobby" or "HB1 Game".
+    private fun getGameLabel(worldName: String): String? {
+        val worldChatSystem = WorldChatSystem.forWorld(worldName) ?: return null
+        val type = if (worldName.endsWith("-hub", ignoreCase = true)) "Lobby" else "Game"
+        return "${worldChatSystem.id} $type"
+    }
+
     @EventHandler
     fun onJoin(event: PlayerJoinEvent) {
         if (!config.discord.enabled) {
@@ -66,7 +76,8 @@ internal class Events : Listener {
         }
 
         val playerPartString = ChatUtil.getPlayerPartString(event.player)
-        val message = "$playerPartString has joined the game. ${onlineCount(key)} player(s) online."
+        val gameLabel = getGameLabel(worldName)?.let { " the $it" } ?: ""
+        val message = "$playerPartString has joined$gameLabel. ${onlineCountInWorld(worldName)} player(s) online."
 
         scope.launch {
             discordBridgeLock.read { discordBridge?.sendEmbed(message, event.player.uniqueId, 0x00FF00, key) }
@@ -89,7 +100,8 @@ internal class Events : Listener {
         }
 
         val playerPartString = ChatUtil.getPlayerPartString(event.player)
-        val message = "$playerPartString has left the game. ${onlineCount(key) - 1} player(s) online."
+        val gameLabel = getGameLabel(worldName)?.let { " the $it" } ?: ""
+        val message = "$playerPartString has left$gameLabel. ${onlineCountInWorld(worldName) - 1} player(s) online."
 
         scope.launch {
             discordBridgeLock.read { discordBridge?.sendEmbed(message, event.player.uniqueId, 0xFF0000, key) }
@@ -115,8 +127,16 @@ internal class Events : Listener {
         }
 
         val playerPartString = ChatUtil.getPlayerPartString(event.player)
-        val leftMessage = fromKey?.let { "$playerPartString has left the game. ${onlineCount(it)} player(s) online." }
-        val joinedMessage = toKey?.let { "$playerPartString has joined the game. ${onlineCount(it)} player(s) online." }
+        val fromGameLabel = getGameLabel(event.from.name)?.let { " the $it" } ?: ""
+        val toGameLabel = getGameLabel(event.player.world.name)?.let { " the $it" } ?: ""
+        val leftMessage =
+            fromKey?.let {
+                "$playerPartString has left$fromGameLabel. ${onlineCountInWorld(event.from.name)} player(s) online."
+            }
+        val joinedMessage =
+            toKey?.let {
+                "$playerPartString has joined$toGameLabel. ${onlineCountInWorld(event.player.world.name)} player(s) online."
+            }
 
         scope.launch {
             discordBridgeLock.read {
