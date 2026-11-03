@@ -1,5 +1,5 @@
 # Chat-OG
-Chat plugin for [TrueOG](https://github.com/true-og/true-og)
+Chat plugin for [TrueOG](https://git.trueog.net/trueog/true-og)
 
 ## Features
 - Adds LuckPerms prefix, Unions-OG tag, and LuckPerms suffix to chat messages.
@@ -47,7 +47,7 @@ discord:
 Add Chat-OG as a submodule:
 
 ```bash
-git submodule add https://github.com/true-og/Chat-OG libs/Chat-OG
+git submodule add https://git.trueog.net/trueog/Chat-OG libs/Chat-OG
 ```
 
 `build.gradle.kts`:
