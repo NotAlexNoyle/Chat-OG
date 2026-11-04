@@ -1,6 +1,6 @@
 [submodule "libs/Vanish-OG"]
 	path = libs/Vanish-OG
-	url = https://github.com/true-og/Vanish-OG
+	url = https://git.trueog.net/trueog/Vanish-OG
 [submodule "libs/Utilities-OG"]
 	path = libs/Utilities-OG
-	url = https://github.com/true-og/Utilities-OG
+	url = https://git.trueog.net/trueog/Utilities-OG
