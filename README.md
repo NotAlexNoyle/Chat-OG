@@ -47,7 +47,7 @@ discord:
 Add Chat-OG as a submodule:
 
 ```bash
-git submodule add https://github.com/true-og/Chat-OG libs/Chat-OG
+git submodule add https://git.trueog.net/trueog/Chat-OG libs/Chat-OG
 ```
 
 `build.gradle.kts`:
